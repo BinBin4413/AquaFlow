@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水瓶排序游戏</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>水瓶排序游戏</h1>
+            <div class="theme-toggle">
+                <button id="themeToggle" aria-label="切换主题">🌞</button>
+            </div>
+        </header>
+
+        <!-- 游戏主要内容区域 -->
+        <main class="game-main">
+            <!-- 开始界面 -->
+            <div id="startScreen" class="screen active">
+                <div class="start-content">
+                    <h2 class="game-title">AquaFlow</h2>
+                    <p class="game-subtitle">水瓶排序 puzzle</p>
+                    <button id="startButton" class="primary-button">开始游戏</button>
+                    <p id="streakDisplay" class="streak-text" style="display:none;"></p>
+                    <p id="startStats" class="stats-text"></p>
+                </div>
+            </div>
+
+            <!-- 游戏主界面 -->
+            <div id="gameScreen" class="screen">
+                <!-- 游戏控制按钮区域 -->
+                <div class="game-controls">
+                    <button id="undoButton" class="tool-button" title="撤销">↺</button>
+                    <button id="hintButton" class="tool-button" title="提示">💡</button>
+                    <button id="skipButton" class="tool-button" title="跳关">🚀</button>
+                </div>
+                <!-- 水瓶容器区域 -->
+                <div id="bottleContainer" class="bottle-container">
+                    <!-- 瓶子模板结构 -->
+                    <template id="bottleTemplate">
+                        <div class="bottle">
+                            <div class="bottle-body">
+                                <div class="bottle-neck"></div>
+                                <div class="segments"></div>
+                                <div class="bottle-bottom"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+              
+                <!-- 游戏统计信息区域 -->
+                <div class="game-stats">
+                    <span id="timeCounter">时间: 0:00</span>
+                    <span id="moveCounter">步数: 0</span>
+                </div>
+            </div>
+
+            <!-- 胜利界面 -->
+            <div id="victoryScreen" class="screen">
+                <div class="victory-content">
+                    <h2>🎉 恭喜通关！</h2>
+                    <p id="victoryStats"></p>
+                    <button id="nextLevelButton" class="primary-button">再来一局</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="scripts/core.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+/* 响应式布局规则 */
+
+/* 基础响应式变量 */
+:root {
+    --game-padding: clamp(10px, 3vw, 20px);
+    --header-font-size: clamp(1.2rem, 4vw, 1.8rem);
+    --button-font-size: clamp(0.9rem, 3vw, 1.2rem);
+    --stats-font-size: clamp(0.8rem, 2.5vw, 1rem);
+}
+
+/* 移动设备优化（320px起） */
+@media screen and (max-width: 480px) {
+    .game-container {
+        padding: var(--game-padding);
+    }
+
+    .game-header h1 {
+        font-size: var(--header-font-size);
+    }
+
+    .primary-button {
+        font-size: var(--button-font-size);
+        padding: 10px 20px;
+    }
+
+    .tool-button {
+        font-size: var(--button-font-size);
+        padding: 6px;
+    }
+
+    .game-stats {
+        font-size: var(--stats-font-size);
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .bottle-container {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+        gap: 5px;
+        padding: 10px;
+    }
+}
+
+/* 平板设备优化 */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .game-container {
+        padding: var(--game-padding);
+    }
+
+    .bottle-container {
+        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+        gap: 8px;
+    }
+}
+
+/* 横屏模式优化 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .game-container {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .game-header {
+        margin-bottom: 0;
+    }
+
+    .game-main {
+        min-height: 300px;
+    }
+
+    .bottle-container {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+    }
+}
+
+/* 安全区域支持 */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .game-container {
+        padding-left: max(var(--game-padding), env(safe-area-inset-left));
+        padding-right: max(var(--game-padding), env(safe-area-inset-right));
+        padding-bottom: max(var(--game-padding), env(safe-area-inset-bottom));
+        padding-top: max(var(--game-padding), env(safe-area-inset-top));
+    }
+}
+
+/* 高DPI屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .game-container {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+}

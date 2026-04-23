@@ -1,0 +1,282 @@
+/* 基础样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 设置页面主体样式 */
+body {
+    /* 设置字体族，优先使用系统默认字体 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    /* 设置行高为1.6倍 */
+    line-height: 1.6;
+    /* 设置最小高度为视口高度 */
+    min-height: 100vh;
+    /* 使用弹性布局 */
+    display: flex;
+    /* 水平居中对齐 */
+    justify-content: center;
+    /* 垂直居中对齐 */
+    align-items: center;
+}
+
+/* 游戏容器 */
+.game-container {
+    width: 100%;
+    max-width: 1100px;
+    padding: 24px;
+    margin: 0 auto;
+}
+
+/* 游戏头部 */
+.game-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.game-header h1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* 主题切换按钮 */
+.theme-toggle button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+/* 游戏主体区域 */
+.game-main {
+    position: relative;
+    min-height: 520px;
+}
+
+/* 屏幕切换 */
+.screen {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* 按钮样式 */
+.primary-button {
+    font-size: 1.2rem;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.primary-button:hover {
+    transform: scale(1.05);
+}
+
+.primary-button:active {
+    transform: scale(0.95);
+}
+
+/* 游戏控制区 */
+.game-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tool-button {
+    font-size: 1.2rem;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.tool-button:hover {
+    transform: scale(1.1);
+}
+
+/* 瓶子容器 */
+.bottle-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    grid-auto-rows: auto;
+    gap: 18px;
+    padding: 20px;
+    justify-items: center;
+    align-items: start;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* 游戏统计 */
+.game-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    font-size: 1rem;
+}
+
+/* 开始屏幕 */
+.start-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fadeInUp 0.6s ease;
+}
+
+.game-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--button-bg), var(--button-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.game-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.streak-text {
+    font-size: 1.1rem;
+    color: #e67e22;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.stats-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+/* 胜利屏幕 */
+.victory-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fadeInUp 0.5s ease;
+}
+
+#victoryScreen h2 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+#victoryStats {
+    margin-bottom: 12px;
+    text-align: center;
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 瓶子样式 */
+.bottle {
+    width: var(--bottle-width);
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.bottle:hover {
+    transform: scale(1.08);
+}
+
+.bottle.selected {
+    transform: scale(1.12);
+}
+
+.bottle-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 10% 10% 24% 24%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.bottle-neck {
+    height: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid var(--bottle-border);
+    border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
+}
+
+.bottle-bottom {
+    height: 16px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 0 0 8px 8px;
+    flex-shrink: 0;
+}
+
+.segments {
+    position: relative;
+    display: flex;
+    flex-direction: column-reverse;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+}
+
+.segment {
+    position: relative;
+    width: 100%;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+
+.empty-space {
+    background: transparent;
+}
+
+/* 提示高亮样式 */
+.hint-from {
+    animation: pulse 1s infinite;
+}
+
+.hint-to {
+    animation: pulse 1s infinite 0.5s;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}

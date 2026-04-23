@@ -1,0 +1,73 @@
+:root {
+    /* 白天主题（默认） */
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-color: #e0e0e0;
+    --button-bg: #4a90e2;
+    --button-text: #ffffff;
+    --button-hover: #357abd;
+    --tool-button-bg: #f0f0f0;
+    --tool-button-text: #333333;
+    --bottle-bg: rgba(255, 255, 255, 0.9);
+    --bottle-border: #cccccc;
+    --water-opacity: 0.8;
+}
+
+/* 黑夜主题 */
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --border-color: #404040;
+    --button-bg: #2c5282;
+    --button-text: #ffffff;
+    --button-hover: #1a365d;
+    --tool-button-bg: #333333;
+    --tool-button-text: #ffffff;
+    --bottle-bg: rgba(45, 45, 45, 0.9);
+    --bottle-border: #404040;
+    --water-opacity: 0.9;
+}
+
+/* 应用主题变量 */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.game-container {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.primary-button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+.primary-button:hover {
+    background-color: var(--button-hover);
+}
+
+.tool-button {
+    background-color: var(--tool-button-bg);
+    color: var(--tool-button-text);
+}
+
+.theme-toggle button {
+    color: var(--text-primary);
+}
+
+.theme-toggle button:hover {
+    background-color: var(--tool-button-bg);
+}
+
+/* 主题切换动画 */
+* {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
