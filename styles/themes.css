@@ -1,73 +1,124 @@
 :root {
-    /* 白天主题（默认） */
-    --bg-primary: #f5f5f5;
-    --bg-secondary: #ffffff;
-    --text-primary: #333333;
-    --text-secondary: #666666;
-    --border-color: #e0e0e0;
-    --button-bg: #4a90e2;
-    --button-text: #ffffff;
-    --button-hover: #357abd;
-    --tool-button-bg: #f0f0f0;
-    --tool-button-text: #333333;
-    --bottle-bg: rgba(255, 255, 255, 0.9);
-    --bottle-border: #cccccc;
-    --water-opacity: 0.8;
+    /* ===== 莫奈日间主题 — 阳光版 ===== */
+    --bg-primary: #dce6de;
+    --bg-secondary: rgba(255, 255, 255, 0.45);
+    --bg-glass: rgba(255, 255, 255, 0.35);
+
+    /* 文字：温暖的深褐，不像纯黑那么冷 */
+    --text-primary: #4a453e;
+    --text-secondary: #7a7568;
+
+    --border-color: rgba(180, 175, 165, 0.4);
+
+    /* 按钮：像阳光下的铜绿 */
+    --button-bg: rgba(100, 130, 115, 0.75);
+    --button-text: #fffdf8;
+    --button-hover: rgba(80, 110, 95, 0.9);
+    --button-glow: rgba(180, 210, 190, 0.5);
+
+    --tool-button-bg: rgba(255, 255, 255, 0.4);
+    --tool-button-text: #5a6358;
+
+    /* 瓶身：更通透的玻璃 */
+    --bottle-bg: rgba(250, 255, 252, 0.35);
+    --bottle-border: rgba(200, 210, 200, 0.4);
+    --bottle-glow: rgba(220, 240, 230, 0.5);
+
+    --water-shimmer: rgba(255, 255, 255, 0.35);
 }
 
-/* 黑夜主题 */
+/* ===== 莫奈黄昏主题 ===== */
 [data-theme="dark"] {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --border-color: #404040;
-    --button-bg: #2c5282;
-    --button-text: #ffffff;
-    --button-hover: #1a365d;
-    --tool-button-bg: #333333;
-    --tool-button-text: #ffffff;
-    --bottle-bg: rgba(45, 45, 45, 0.9);
-    --bottle-border: #404040;
-    --water-opacity: 0.9;
+    --bg-primary: #585e66;
+    --bg-secondary: rgba(45, 50, 58, 0.5);
+    --bg-glass: rgba(55, 62, 70, 0.4);
+
+    --text-primary: #e8e4dc;
+    --text-secondary: #b0a898;
+
+    --border-color: rgba(110, 118, 128, 0.4);
+
+    --button-bg: rgba(90, 105, 115, 0.75);
+    --button-text: #f5f1e8;
+    --button-hover: rgba(70, 85, 95, 0.9);
+    --button-glow: rgba(150, 165, 175, 0.4);
+
+    --tool-button-bg: rgba(70, 78, 86, 0.45);
+    --tool-button-text: #d0ccc4;
+
+    --bottle-bg: rgba(80, 88, 96, 0.3);
+    --bottle-border: rgba(115, 125, 135, 0.4);
+    --bottle-glow: rgba(140, 155, 165, 0.35);
+
+    --water-shimmer: rgba(210, 220, 230, 0.2);
 }
 
-/* 应用主题变量 */
+/* ===== 全局字体 ===== */
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.game-title,
+#victoryScreen h2,
+.game-header h1 {
+    font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif;
 }
 
 .game-container {
-    background-color: var(--bg-secondary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 24px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
 }
 
+/* 按钮 */
 .primary-button {
-    background-color: var(--button-bg);
+    background: var(--button-bg);
     color: var(--button-text);
+    font-family: 'Lato', sans-serif;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    border-radius: 50px;
+    padding: 14px 36px;
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .primary-button:hover {
-    background-color: var(--button-hover);
+    background: var(--button-hover);
+    box-shadow:
+        0 6px 24px var(--button-glow),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 .tool-button {
-    background-color: var(--tool-button-bg);
+    background: var(--tool-button-bg);
     color: var(--tool-button-text);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
 }
 
 .theme-toggle button {
     color: var(--text-primary);
+    backdrop-filter: blur(8px);
+    background: var(--tool-button-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
 }
 
-.theme-toggle button:hover {
-    background-color: var(--tool-button-bg);
-}
-
-/* 主题切换动画 */
 * {
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    transition: background-color 0.6s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }

@@ -69,7 +69,7 @@ export function updateUI(gameState) {
 
 function createBottleElement() {
     const bottle = document.createElement('div');
-    bottle.className = 'bottle';
+    bottle.className = 'bottle nouveau';
     bottle.innerHTML = `
         <div class="bottle-body">
             <div class="bottle-neck"></div>

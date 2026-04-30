@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>水瓶排序游戏</title>
+    <title>AquaFlow — 水瓶排序</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/themes.css">
     <link rel="stylesheet" href="styles/responsive.css">
 </head>
 <body>
+    <!-- 双层背景，用于莫奈画作淡入淡出 -->
+    <div id="bgLayerA" class="bg-layer active"></div>
+    <div id="bgLayerB" class="bg-layer"></div>
+
     <div class="game-container">
         <header class="game-header">
             <h1>水瓶排序游戏</h1>
@@ -68,6 +75,11 @@
                 </div>
             </div>
         </main>
+
+        <footer class="game-footer">
+            <p>有问题或想法？欢迎来小红书交流</p>
+            <a href="https://www.xiaohongshu.com/user/profile/49997129467" target="_blank" rel="noopener">小红书 @49997129467</a>
+        </footer>
     </div>
 
     <script type="module" src="scripts/core.js"></script>

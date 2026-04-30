@@ -50,9 +50,39 @@ function formatTime(seconds) {
     return m > 0 ? `${m}分${s.toString().padStart(2, '0')}秒` : `${s}秒`;
 }
 
+// ========== 莫奈背景画廊 ==========
+const MONET_BACKGROUNDS = [
+    'assets/monet-01-water-lilies.jpg',
+    'assets/monet-03-impression-sunrise.jpg',
+    'assets/monet-04-poppy.jpg',
+    'assets/monet-05-woman-parasol.jpg'
+];
+
+let currentBgLayer = 'A';
+
+function pickRandomBackground() {
+    const pick = MONET_BACKGROUNDS[Math.floor(Math.random() * MONET_BACKGROUNDS.length)];
+    const nextLayer = currentBgLayer === 'A' ? 'B' : 'A';
+
+    const nextEl = document.getElementById(`bgLayer${nextLayer}`);
+    const currEl = document.getElementById(`bgLayer${currentBgLayer}`);
+    if (!nextEl || !currEl) return;
+
+    // 预加载图片，加载完成后再淡入
+    const img = new Image();
+    img.onload = () => {
+        nextEl.style.backgroundImage = `url('${pick}')`;
+        nextEl.classList.add('active');
+        currEl.classList.remove('active');
+        currentBgLayer = nextLayer;
+    };
+    img.src = pick;
+}
+
 // ========== 初始化 ==========
 
 function initGame() {
+    pickRandomBackground();
     initUI();
     initLayout();
 
@@ -89,6 +119,7 @@ function updateStartScreen() {
 
 function startGame() {
     clearInterval(gameState.timer);
+    pickRandomBackground();
 
     const result = generateLevel(player.currentBracket);
 
