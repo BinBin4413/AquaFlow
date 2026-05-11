@@ -69,8 +69,10 @@
             <!-- 胜利界面 -->
             <div id="victoryScreen" class="screen">
                 <div class="victory-content">
-                    <h2>🎉 恭喜通关！</h2>
+                    <h2 id="victoryTitle">🎉 恭喜通关！</h2>
+                    <div id="victoryStars" class="star-display"></div>
                     <p id="victoryStats"></p>
+                    <button id="appealButton" class="primary-button" style="display:none;">📏 查看最短解</button>
                     <button id="nextLevelButton" class="primary-button">再来一局</button>
                 </div>
             </div>
@@ -80,6 +82,13 @@
             <p>有问题或想法？欢迎来小红书交流</p>
             <a href="https://www.xiaohongshu.com/user/profile/49997129467" target="_blank" rel="noopener">小红书 @49997129467</a>
         </footer>
+    </div>
+
+    <div id="appealModal" class="modal-overlay">
+        <div class="modal-box">
+            <p id="appealText"></p>
+            <button id="appealClose" class="primary-button">知道了</button>
+        </div>
     </div>
 
     <script type="module" src="scripts/core.js"></script>

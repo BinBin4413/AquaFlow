@@ -571,6 +571,66 @@ body {
     opacity: 1;
 }
 
+/* ===== 星级展示 ===== */
+.star-display {
+    font-size: 2.4rem;
+    color: #e8c547;
+    letter-spacing: 4px;
+    text-shadow: 0 2px 8px rgba(232, 197, 71, 0.3);
+    margin: 8px 0;
+    animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+/* ===== 申诉弹窗 ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 32px 36px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(20px) scale(0.96);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-overlay.active .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.modal-box p {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    line-height: 1.8;
+    margin-bottom: 24px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+}
+
 /* ===== 全局动画 ===== */
 @keyframes fadeInUp {
     from {

@@ -1,11 +1,12 @@
 // 游戏核心逻辑
 
 import { generateLevel, DIFFICULTY_BRACKETS } from './generator.js';
-import { findNextMove, pour, isSolved } from './solver.js';
+import { solve, findNextMove, pour, isSolved } from './solver.js';
 import { initUI, updateUI, showScreen, playVictoryEffect } from './ui.js';
 import { initLayout, updateLayout } from './layout.js';
 
-const PLAYER_KEY = 'aquaflow_player_v1';
+const PLAYER_KEY = 'aquaflow_player_v210';
+const LEGACY_KEY = 'aquaflow_player_v1';
 
 // 游戏状态
 let gameState = {
@@ -20,7 +21,9 @@ let gameState = {
     hintMove: null,
     lastError: null,
     usedHint: false,
-    skipped: false
+    skipped: false,
+    optimalSteps: 0,
+    initialBottles: []
 };
 
 // 玩家数据（自适应难度用）
@@ -30,9 +33,33 @@ function loadPlayer() {
     try {
         const raw = localStorage.getItem(PLAYER_KEY);
         if (raw) return JSON.parse(raw);
+
+        // 兼容旧版本数据
+        const legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+            const v1 = JSON.parse(legacy);
+            const migrated = {
+                currentBracket: v1.currentBracket ?? 1,
+                streak: v1.streak ?? 0,
+                totalGames: v1.totalGames ?? 0,
+                totalWins: v1.totalWins ?? 0,
+                history: (v1.history || []).map(h => ({
+                    win: h.win,
+                    time: h.time ?? 0,
+                    usedHint: h.usedHint ?? false,
+                    skipped: h.skipped ?? false,
+                    difficulty: h.difficulty,
+                    stars: h.win ? 1 : 0,
+                    optimalSteps: 0
+                }))
+            };
+            localStorage.setItem(PLAYER_KEY, JSON.stringify(migrated));
+            localStorage.removeItem(LEGACY_KEY);
+            return migrated;
+        }
     } catch (e) { /* ignore */ }
     return {
-        currentBracket: 1,   // 默认从"简单"开始，让玩家先适应
+        currentBracket: 1,
         streak: 0,
         totalGames: 0,
         totalWins: 0,
@@ -48,6 +75,13 @@ function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return m > 0 ? `${m}分${s.toString().padStart(2, '0')}秒` : `${s}秒`;
+}
+
+function calculateStars(moveCount, optimalSteps) {
+    if (optimalSteps <= 0) return 1;
+    if (moveCount <= optimalSteps) return 3;
+    if (moveCount <= optimalSteps + 5) return 2;
+    return 1;
 }
 
 // ========== 莫奈背景画廊 ==========
@@ -93,6 +127,12 @@ function initGame() {
     document.getElementById('nextLevelButton').addEventListener('click', startGame);
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
+    const appealBtn = document.getElementById('appealButton');
+    if (appealBtn) appealBtn.addEventListener('click', appeal);
+
+    const appealClose = document.getElementById('appealClose');
+    if (appealClose) appealClose.addEventListener('click', hideAppealModal);
+
     document.addEventListener('bottleClick', handleBottleClick);
 
     loadThemePreference();
@@ -111,7 +151,22 @@ function updateStartScreen() {
 
     const statsEl = document.getElementById('startStats');
     if (statsEl) {
-        statsEl.textContent = `总场次: ${player.totalGames}  胜率: ${player.totalGames > 0 ? Math.round((player.totalWins / player.totalGames) * 100) : 0}%`;
+        const winHistory = player.history.filter(h => h.win);
+        let bestStars = 0;
+        let avgStars = '0.00';
+
+        if (winHistory.length > 0) {
+            bestStars = Math.max(...winHistory.map(h => h.stars || 1));
+            const totalStars = winHistory.reduce((sum, h) => sum + (h.stars || 1), 0);
+            avgStars = (totalStars / winHistory.length).toFixed(2);
+        }
+
+        const bestStarText = '★'.repeat(bestStars) + '☆'.repeat(3 - bestStars);
+
+        statsEl.innerHTML = `
+            总场次: ${player.totalGames} &nbsp; 胜率: ${player.totalGames > 0 ? Math.round((player.totalWins / player.totalGames) * 100) : 0}%<br>
+            最高星级: ${bestStarText} &nbsp; 平均星度: ${avgStars}⭐
+        `;
     }
 }
 
@@ -119,6 +174,7 @@ function updateStartScreen() {
 
 function startGame() {
     clearInterval(gameState.timer);
+    hideAppealModal();
     pickRandomBackground();
 
     const result = generateLevel(player.currentBracket);
@@ -135,7 +191,9 @@ function startGame() {
         hintMove: null,
         lastError: null,
         usedHint: false,
-        skipped: false
+        skipped: false,
+        optimalSteps: result.difficulty?.steps || 0,
+        initialBottles: result.bottles.map(b => [...b])
     };
 
     showScreen('gameScreen');
@@ -237,9 +295,24 @@ function checkVictory() {
     clearInterval(gameState.timer);
     recordResult(true);
 
+    const stars = calculateStars(gameState.moveCount, gameState.optimalSteps);
+    const starText = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+    const titleMap = { 3: '🎉 恭喜完美通关！', 2: '👏 优秀通关！', 1: '🎉 恭喜通关！' };
+
+    const titleEl = document.getElementById('victoryTitle');
+    if (titleEl) titleEl.textContent = titleMap[stars];
+
+    const starsEl = document.getElementById('victoryStars');
+    if (starsEl) starsEl.textContent = starText;
+
+    const appealBtn = document.getElementById('appealButton');
+    if (appealBtn) {
+        appealBtn.style.display = stars < 3 ? 'inline-block' : 'none';
+    }
+
     const statsLines = [
         `用时: ${formatTime(gameState.timeElapsed)}`,
-        `步数: ${gameState.moveCount}`,
+        `步数: ${gameState.moveCount} / 最短 ${gameState.optimalSteps} 步`,
         ``,
         `这局的难度：${gameState.difficulty?.label || '未知'} 🧠`
     ];
@@ -251,10 +324,47 @@ function checkVictory() {
     return true;
 }
 
+// ========== 申诉 ==========
+
+function appeal() {
+    const textEl = document.getElementById('appealText');
+    if (!textEl) return;
+
+    if (gameState.optimalSteps > 0) {
+        textEl.textContent = `本局最短解需要 ${gameState.optimalSteps} 步，你当前已走 ${gameState.moveCount} 步`;
+        showAppealModal();
+        return;
+    }
+
+    textEl.textContent = '正在计算最短解，请稍候...';
+    showAppealModal();
+
+    setTimeout(() => {
+        const result = solve(gameState.initialBottles, 100000);
+        if (result.solvable) {
+            gameState.optimalSteps = result.depth;
+            textEl.textContent = `本局最短解需要 ${result.depth} 步，你当前已走 ${gameState.moveCount} 步`;
+        } else {
+            textEl.textContent = `本局较为复杂，已探索 ${result.iterations} 个状态仍未确定最短解。请继续尝试！`;
+        }
+    }, 50);
+}
+
+function showAppealModal() {
+    const modal = document.getElementById('appealModal');
+    if (modal) modal.classList.add('active');
+}
+
+function hideAppealModal() {
+    const modal = document.getElementById('appealModal');
+    if (modal) modal.classList.remove('active');
+}
+
 // ========== 自适应难度 ==========
 
 function recordResult(win) {
     player.totalGames++;
+    const stars = win ? calculateStars(gameState.moveCount, gameState.optimalSteps) : 0;
     if (win) {
         player.totalWins++;
         player.streak++;
@@ -267,9 +377,11 @@ function recordResult(win) {
         time: gameState.timeElapsed,
         usedHint: gameState.usedHint,
         skipped: gameState.skipped,
-        difficulty: gameState.difficulty?.label
+        difficulty: gameState.difficulty?.label,
+        stars,
+        optimalSteps: gameState.optimalSteps
     });
-    if (player.history.length > 15) player.history.shift();
+    if (player.history.length > 30) player.history.shift();
 
     adjustDifficulty();
     savePlayer();
