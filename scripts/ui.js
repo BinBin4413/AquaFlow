@@ -37,10 +37,15 @@ export function updateUI(gameState) {
     gameState.bottles.forEach((bottle, index) => {
         const el = bottleElements[index];
         if (!el) return;
-        updateBottleContent(el, bottle);
+        const prevBottle = gameState.prevBottles ? gameState.prevBottles[index] : null;
+        updateBottleContent(el, bottle, prevBottle);
 
         // 选中状态
         el.classList.toggle('selected', index === gameState.selectedBottle);
+
+        // 倒水动作
+        el.classList.toggle('pouring', index === gameState.pourFrom);
+        el.classList.toggle('receiving', index === gameState.pourTo);
 
         // 错误摇晃
         if (gameState.lastError && gameState.lastError.from === index) {
@@ -65,6 +70,11 @@ export function updateUI(gameState) {
             bottleElements.forEach(el => el.classList.remove('hint-from', 'hint-to'));
         }, 3000);
     }
+
+    // 清除一次性动画状态
+    if (gameState.prevBottles) gameState.prevBottles = null;
+    if (gameState.pourFrom !== -1) gameState.pourFrom = -1;
+    if (gameState.pourTo !== -1) gameState.pourTo = -1;
 }
 
 function createBottleElement() {
@@ -80,25 +90,55 @@ function createBottleElement() {
     return bottle;
 }
 
-function updateBottleContent(element, segments) {
+function updateBottleContent(element, segments, prevSegments) {
     const container = element.querySelector('.segments');
-    container.innerHTML = '';
-
     const maxSegments = 4;
 
     for (let i = 0; i < maxSegments; i++) {
-        const seg = document.createElement('div');
-        seg.className = 'segment';
+        let seg = container.children[i];
+        const newColor = i < segments.length ? segments[i] : null;
+        const oldColor = prevSegments && i < prevSegments.length ? prevSegments[i] : null;
 
-        if (i < segments.length) {
-            seg.style.backgroundColor = segments[i];
-            seg.style.opacity = '0.88';
-        } else {
-            seg.style.backgroundColor = 'transparent';
-            seg.style.opacity = '0';
+        if (!seg) {
+            seg = document.createElement('div');
+            seg.className = 'segment';
+            container.appendChild(seg);
         }
 
-        container.appendChild(seg);
+        if (!prevSegments) {
+            // 初始渲染，无动画
+            if (newColor) {
+                seg.style.backgroundColor = newColor;
+                seg.style.opacity = '0.88';
+            } else {
+                seg.style.backgroundColor = 'transparent';
+                seg.style.opacity = '0';
+            }
+            continue;
+        }
+
+        // 有 prevSegments，说明是状态变化，需要动画
+        if (newColor && !oldColor) {
+            // 新增段
+            seg.classList.remove('pour-out');
+            seg.style.backgroundColor = newColor;
+            seg.style.opacity = '0';
+            void seg.offsetWidth;
+            seg.classList.add('pour-in');
+            seg.style.opacity = '0.88';
+        } else if (!newColor && oldColor) {
+            // 移除段
+            seg.classList.remove('pour-in');
+            seg.classList.add('pour-out');
+        } else if (newColor && oldColor && newColor !== oldColor) {
+            // 颜色改变（异常情况）
+            seg.style.backgroundColor = newColor;
+            seg.style.opacity = '0.88';
+            seg.classList.remove('pour-in', 'pour-out');
+        } else {
+            // 无变化
+            seg.classList.remove('pour-in', 'pour-out');
+        }
     }
 }
 

@@ -581,6 +581,58 @@ body {
     animation: fadeInUp 0.6s ease 0.2s both;
 }
 
+/* ===== 倒水动画 ===== */
+.segment.pour-in {
+    animation: segment-pour-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.segment.pour-out {
+    animation: segment-pour-out 250ms ease-in forwards;
+}
+
+@keyframes segment-pour-in {
+    0% {
+        transform: scaleY(0.2);
+        opacity: 0;
+    }
+    100% {
+        transform: scaleY(1);
+        opacity: 0.88;
+    }
+}
+
+@keyframes segment-pour-out {
+    0% {
+        transform: scaleY(1);
+        opacity: 0.88;
+    }
+    100% {
+        transform: scaleY(0.2);
+        opacity: 0;
+    }
+}
+
+/* 瓶子整体倒水动作 */
+.bottle.pouring {
+    animation: bottle-pour 300ms ease;
+}
+
+.bottle.receiving {
+    animation: bottle-receive 300ms ease;
+}
+
+@keyframes bottle-pour {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(-2deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes bottle-receive {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+    100% { transform: translateY(0); }
+}
+
 /* ===== 申诉弹窗 ===== */
 .modal-overlay {
     position: fixed;

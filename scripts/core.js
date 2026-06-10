@@ -24,7 +24,10 @@ let gameState = {
     skipped: false,
     optimalSteps: 0,
     initialBottles: [],
-    autoPlaying: false
+    autoPlaying: false,
+    prevBottles: null,
+    pourFrom: -1,
+    pourTo: -1
 };
 
 // 玩家数据（自适应难度用）
@@ -195,7 +198,10 @@ function startGame() {
         skipped: false,
         optimalSteps: result.difficulty?.steps || 0,
         initialBottles: result.bottles.map(b => [...b]),
-        autoPlaying: false
+        autoPlaying: false,
+        prevBottles: null,
+        pourFrom: -1,
+        pourTo: -1
     };
 
     showScreen('gameScreen');
@@ -243,6 +249,11 @@ function handleBottleClick(event) {
         (toBottle.length === 0 || toBottle[toBottle.length - 1] === fromBottle[fromBottle.length - 1]);
 
     if (can) {
+        // 保存动画前状态
+        gameState.prevBottles = gameState.bottles.map(b => [...b]);
+        gameState.pourFrom = fromIdx;
+        gameState.pourTo = toIdx;
+
         // 保存撤销状态（深拷贝）
         gameState.moves.push({
             bottles: gameState.bottles.map(b => [...b]),
@@ -268,6 +279,7 @@ function undoMove() {
     if (gameState.autoPlaying) return;
     if (gameState.moves.length === 0) return;
     const last = gameState.moves.pop();
+    gameState.prevBottles = gameState.bottles.map(b => [...b]);
     gameState.bottles = last.bottles;
     gameState.moveCount = Math.max(0, gameState.moveCount - 1);
     gameState.selectedBottle = -1;
@@ -352,6 +364,9 @@ async function runAutoPlay(moves) {
         // 等待 500ms 让玩家看到高亮
         await new Promise(r => setTimeout(r, 500));
 
+        // 保存动画前状态
+        const prevBottles = gameState.bottles.map(b => [...b]);
+
         // 执行倒水
         const fromBottle = gameState.bottles[move.from];
         const toBottle = gameState.bottles[move.to];
@@ -365,6 +380,9 @@ async function runAutoPlay(moves) {
 
         pour(fromBottle, toBottle);
         gameState.moveCount++;
+        gameState.prevBottles = prevBottles;
+        gameState.pourFrom = move.from;
+        gameState.pourTo = move.to;
         gameState.hintMove = null;
         gameState.selectedBottle = -1;
 
