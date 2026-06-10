@@ -23,7 +23,8 @@ let gameState = {
     usedHint: false,
     skipped: false,
     optimalSteps: 0,
-    initialBottles: []
+    initialBottles: [],
+    autoPlaying: false
 };
 
 // 玩家数据（自适应难度用）
@@ -193,7 +194,8 @@ function startGame() {
         usedHint: false,
         skipped: false,
         optimalSteps: result.difficulty?.steps || 0,
-        initialBottles: result.bottles.map(b => [...b])
+        initialBottles: result.bottles.map(b => [...b]),
+        autoPlaying: false
     };
 
     showScreen('gameScreen');
@@ -210,6 +212,7 @@ function updateTimer() {
 // ========== 操作处理 ==========
 
 function handleBottleClick(event) {
+    if (gameState.autoPlaying) return;
     const index = event.detail.bottleIndex;
     gameState.hintMove = null;
     gameState.lastError = null;
@@ -249,7 +252,9 @@ function handleBottleClick(event) {
 
         pour(fromBottle, toBottle);
         gameState.moveCount++;
-        checkVictory();
+        if (!checkVictory()) {
+            checkAutoComplete();
+        }
     } else {
         // 非法操作：记录错误源瓶，触发摇晃
         gameState.lastError = { from: fromIdx, to: toIdx };
@@ -260,6 +265,7 @@ function handleBottleClick(event) {
 }
 
 function undoMove() {
+    if (gameState.autoPlaying) return;
     if (gameState.moves.length === 0) return;
     const last = gameState.moves.pop();
     gameState.bottles = last.bottles;
@@ -271,6 +277,7 @@ function undoMove() {
 }
 
 function showHint() {
+    if (gameState.autoPlaying) return;
     gameState.usedHint = true;
     const hint = findNextMove(gameState.bottles);
     if (hint) {
@@ -281,6 +288,7 @@ function showHint() {
 }
 
 function skipLevel() {
+    if (gameState.autoPlaying) return;
     gameState.skipped = true;
     recordResult(false);
     clearInterval(gameState.timer);
@@ -322,6 +330,54 @@ function checkVictory() {
     showScreen('victoryScreen');
     updateStartScreen();
     return true;
+}
+
+// ========== 自动完成 ==========
+
+function checkAutoComplete() {
+    const result = solve(gameState.bottles, 20000);
+    if (result.solvable && result.moves.length <= 5 && result.moves.length > 0) {
+        runAutoPlay(result.moves);
+    }
+}
+
+async function runAutoPlay(moves) {
+    gameState.autoPlaying = true;
+
+    for (const move of moves) {
+        // 高亮要操作的瓶子
+        gameState.hintMove = move;
+        updateUI(gameState);
+
+        // 等待 500ms 让玩家看到高亮
+        await new Promise(r => setTimeout(r, 500));
+
+        // 执行倒水
+        const fromBottle = gameState.bottles[move.from];
+        const toBottle = gameState.bottles[move.to];
+
+        // 保存撤销状态
+        gameState.moves.push({
+            bottles: gameState.bottles.map(b => [...b]),
+            selectedBottle: move.from
+        });
+        if (gameState.moves.length > 50) gameState.moves.shift();
+
+        pour(fromBottle, toBottle);
+        gameState.moveCount++;
+        gameState.hintMove = null;
+        gameState.selectedBottle = -1;
+
+        updateUI(gameState);
+
+        // 检查是否通关
+        if (checkVictory()) break;
+
+        // 步骤间隔
+        await new Promise(r => setTimeout(r, 400));
+    }
+
+    gameState.autoPlaying = false;
 }
 
 // ========== 申诉 ==========
