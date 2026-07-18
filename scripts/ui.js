@@ -2,6 +2,8 @@
 
 let bottleElements = [];
 let confettiActive = false;
+let longPressTimer = null;
+let longPressTriggered = false;
 
 export function initUI() {
     const container = document.getElementById('bottleContainer');
@@ -14,6 +16,34 @@ export function initUI() {
     bottleElements = [];
 
     container.addEventListener('click', handleBottleClick);
+
+    // 长按偷看事件
+    const startPress = (e) => {
+        const bottle = e.target.closest('.bottle');
+        if (!bottle) return;
+        const index = bottleElements.indexOf(bottle);
+        if (index === -1) return;
+
+        longPressTriggered = false;
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+            longPressTriggered = true;
+            const event = new CustomEvent('bottleLongPress', {
+                detail: { bottleIndex: index }
+            });
+            document.dispatchEvent(event);
+        }, 800);
+    };
+
+    const cancelPress = () => {
+        clearTimeout(longPressTimer);
+    };
+
+    container.addEventListener('mousedown', startPress);
+    container.addEventListener('touchstart', startPress);
+    container.addEventListener('mouseup', cancelPress);
+    container.addEventListener('touchend', cancelPress);
+    container.addEventListener('touchmove', cancelPress);
 }
 
 export function updateUI(gameState) {
@@ -37,8 +67,31 @@ export function updateUI(gameState) {
     gameState.bottles.forEach((bottle, index) => {
         const el = bottleElements[index];
         if (!el) return;
+
         const prevBottle = gameState.prevBottles ? gameState.prevBottles[index] : null;
-        updateBottleContent(el, bottle, prevBottle);
+
+        // 记忆模式配置
+        let memoryConfig = null;
+        if (gameState.memoryMode) {
+            const now = Date.now();
+            const isRevealPhase = gameState.memoryRevealEnd > 0 && now < gameState.memoryRevealEnd;
+            const isPeekPhase = gameState.peekBottle === index && now < gameState.peekEnd;
+
+            if (!isRevealPhase && !isPeekPhase && bottle.length > 0) {
+                const topIndex = bottle.length - 1;
+                if (!gameState.revealed[index]) {
+                    gameState.revealed[index] = [false, false, false, false];
+                }
+                gameState.revealed[index][topIndex] = true;
+                memoryConfig = {
+                    hidden: true,
+                    topIndex: topIndex,
+                    revealed: gameState.revealed[index]
+                };
+            }
+        }
+
+        updateBottleContent(el, bottle, prevBottle, memoryConfig);
 
         // 选中状态
         el.classList.toggle('selected', index === gameState.selectedBottle);
@@ -77,7 +130,7 @@ export function updateUI(gameState) {
     if (gameState.pourTo !== -1) gameState.pourTo = -1;
 }
 
-function createBottleElement() {
+export function createBottleElement() {
     const bottle = document.createElement('div');
     bottle.className = 'bottle nouveau';
     bottle.innerHTML = `
@@ -90,7 +143,7 @@ function createBottleElement() {
     return bottle;
 }
 
-function updateBottleContent(element, segments, prevSegments) {
+export function updateBottleContent(element, segments, prevSegments, memoryConfig) {
     const container = element.querySelector('.segments');
     const maxSegments = 4;
 
@@ -105,14 +158,24 @@ function updateBottleContent(element, segments, prevSegments) {
             container.appendChild(seg);
         }
 
+        const isRevealed = memoryConfig && memoryConfig.revealed && memoryConfig.revealed[i];
+        const isHiddenByMemory = memoryConfig && memoryConfig.hidden && i !== memoryConfig.topIndex && !isRevealed;
+
+        // 先清理记忆隐藏类（动画需要正常颜色）
+        seg.classList.remove('memory-hidden');
+
         if (!prevSegments) {
-            // 初始渲染，无动画
+            // 初始渲染，无动画，清除可能残留的动画类
+            seg.classList.remove('pour-in', 'pour-out');
             if (newColor) {
                 seg.style.backgroundColor = newColor;
                 seg.style.opacity = '0.88';
             } else {
                 seg.style.backgroundColor = 'transparent';
                 seg.style.opacity = '0';
+            }
+            if (isHiddenByMemory && newColor) {
+                seg.classList.add('memory-hidden');
             }
             continue;
         }
@@ -139,6 +202,11 @@ function updateBottleContent(element, segments, prevSegments) {
             // 无变化
             seg.classList.remove('pour-in', 'pour-out');
         }
+
+        // 记忆隐藏：只在非动画状态下应用
+        if (isHiddenByMemory && newColor) {
+            seg.classList.add('memory-hidden');
+        }
     }
 }
 
@@ -151,6 +219,11 @@ function triggerShake(element) {
 }
 
 function handleBottleClick(event) {
+    if (longPressTriggered) {
+        longPressTriggered = false;
+        return;
+    }
+
     const bottle = event.target.closest('.bottle');
     if (!bottle) return;
     const index = bottleElements.indexOf(bottle);

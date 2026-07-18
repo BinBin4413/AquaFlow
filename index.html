@@ -32,6 +32,12 @@
                     <h2 class="game-title">AquaFlow</h2>
                     <p class="game-subtitle">水瓶排序 puzzle</p>
                     <button id="startButton" class="primary-button">开始游戏</button>
+                    <div id="memoryToggle" class="memory-toggle">
+                        <span>🧠 记忆模式</span>
+                        <div class="toggle-switch" id="memorySwitch">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
                     <p id="streakDisplay" class="streak-text" style="display:none;"></p>
                     <p id="startStats" class="stats-text"></p>
                 </div>
@@ -72,10 +78,11 @@
                     <h2 id="victoryTitle">🎉 恭喜通关！</h2>
                     <div id="victoryStars" class="star-display"></div>
                     <p id="victoryStats"></p>
-                    <button id="appealButton" class="primary-button" style="display:none;">📏 查看最短解</button>
                     <button id="nextLevelButton" class="primary-button">再来一局</button>
                 </div>
             </div>
+
+
         </main>
 
         <footer class="game-footer">
@@ -84,11 +91,13 @@
         </footer>
     </div>
 
-    <div id="appealModal" class="modal-overlay">
-        <div class="modal-box">
-            <p id="appealText"></p>
-            <button id="appealClose" class="primary-button">知道了</button>
+    <div id="debugPanel" class="debug-panel" style="display:none;">
+        <div class="debug-header">
+            <span>🔧 调试面板</span>
+            <button id="debugCopy" class="debug-btn">复制数据</button>
+            <button id="debugClose" class="debug-btn">×</button>
         </div>
+        <div id="debugContent" class="debug-content"></div>
     </div>
 
     <script type="module" src="scripts/core.js"></script>

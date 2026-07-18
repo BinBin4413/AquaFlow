@@ -2,7 +2,7 @@
 
 import { generateLevel, DIFFICULTY_BRACKETS } from './generator.js';
 import { solve, findNextMove, pour, isSolved } from './solver.js';
-import { initUI, updateUI, showScreen, playVictoryEffect } from './ui.js';
+import { initUI, updateUI, showScreen, playVictoryEffect, createBottleElement, updateBottleContent } from './ui.js';
 import { initLayout, updateLayout } from './layout.js';
 
 const PLAYER_KEY = 'aquaflow_player_v210';
@@ -27,11 +27,21 @@ let gameState = {
     autoPlaying: false,
     prevBottles: null,
     pourFrom: -1,
-    pourTo: -1
+    pourTo: -1,
+    memoryMode: false,
+    memoryRevealEnd: 0,
+    peekBottle: -1,
+    peekEnd: 0,
+    peekUsed: false,
+    revealed: null
 };
 
 // 玩家数据（自适应难度用）
 let player = loadPlayer();
+
+// 调试面板
+let debugMode = false;
+let recentMoves = [];
 
 function loadPlayer() {
     try {
@@ -131,14 +141,26 @@ function initGame() {
     document.getElementById('nextLevelButton').addEventListener('click', startGame);
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    const appealBtn = document.getElementById('appealButton');
-    if (appealBtn) appealBtn.addEventListener('click', appeal);
-
-    const appealClose = document.getElementById('appealClose');
-    if (appealClose) appealClose.addEventListener('click', hideAppealModal);
+    const memoryToggle = document.getElementById('memoryToggle');
+    if (memoryToggle) memoryToggle.addEventListener('click', toggleMemoryMode);
 
     document.addEventListener('bottleClick', handleBottleClick);
+    document.addEventListener('bottleLongPress', handleBottleLongPress);
 
+    // 调试面板
+    const debugCopy = document.getElementById('debugCopy');
+    if (debugCopy) debugCopy.addEventListener('click', copyDebugData);
+    const debugClose = document.getElementById('debugClose');
+    if (debugClose) debugClose.addEventListener('click', toggleDebugPanel);
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            toggleDebugPanel();
+        }
+    });
+    setInterval(() => { if (debugMode) updateDebugPanel(); }, 500);
+
+    loadMemoryModePreference();
     loadThemePreference();
     updateStartScreen();
 }
@@ -178,9 +200,9 @@ function updateStartScreen() {
 
 function startGame() {
     clearInterval(gameState.timer);
-    hideAppealModal();
     pickRandomBackground();
 
+    const wasMemoryMode = gameState.memoryMode;
     const result = generateLevel(player.currentBracket);
 
     gameState = {
@@ -201,12 +223,19 @@ function startGame() {
         autoPlaying: false,
         prevBottles: null,
         pourFrom: -1,
-        pourTo: -1
+        pourTo: -1,
+        memoryMode: wasMemoryMode,
+        memoryRevealEnd: 0,
+        peekBottle: -1,
+        peekEnd: 0,
+        peekUsed: false,
+        revealed: result.bottles.map(() => [false, false, false, false])
     };
 
     showScreen('gameScreen');
     updateLayout(gameState.bottles.length);
     updateUI(gameState);
+
 }
 
 function updateTimer() {
@@ -261,8 +290,15 @@ function handleBottleClick(event) {
         });
         if (gameState.moves.length > 50) gameState.moves.shift(); // 限制撤销深度
 
-        pour(fromBottle, toBottle);
+        const srcLenBefore = fromBottle.length;
+        const tgtLenBefore = toBottle.length;
+        const pourResult = pour(fromBottle, toBottle);
+        if (pourResult) {
+            transferRevealed(fromIdx, toIdx, pourResult.count, srcLenBefore, tgtLenBefore);
+        }
         gameState.moveCount++;
+        recentMoves.push(`瓶${fromIdx}→瓶${toIdx}`);
+        if (recentMoves.length > 10) recentMoves.shift();
         if (!checkVictory()) {
             checkAutoComplete();
         }
@@ -307,6 +343,53 @@ function skipLevel() {
     startGame();
 }
 
+// ========== 记忆模式 ==========
+
+function toggleMemoryMode() {
+    gameState.memoryMode = !gameState.memoryMode;
+    const switchEl = document.getElementById('memorySwitch');
+    if (switchEl) switchEl.classList.toggle('active', gameState.memoryMode);
+    localStorage.setItem('memoryMode', gameState.memoryMode);
+}
+
+function loadMemoryModePreference() {
+    const saved = localStorage.getItem('memoryMode') === 'true';
+    gameState.memoryMode = saved;
+    const switchEl = document.getElementById('memorySwitch');
+    if (switchEl) switchEl.classList.toggle('active', saved);
+}
+
+function handleBottleLongPress(event) {
+    if (gameState.autoPlaying) return;
+    if (!gameState.memoryMode || gameState.peekUsed) return;
+    
+    const index = event.detail.bottleIndex;
+    if (gameState.bottles[index].length === 0) return;
+    
+    gameState.peekUsed = true;
+    gameState.peekBottle = index;
+    gameState.peekEnd = Date.now() + 2000;
+    
+    updateUI(gameState);
+    
+    setTimeout(() => {
+        gameState.peekBottle = -1;
+        gameState.peekEnd = 0;
+        updateUI(gameState);
+    }, 2000);
+}
+
+// 倒水时把源瓶被倒出的液体块的"已揭晓"状态转移到目标瓶对应位置，
+// 避免已露面的块在倒入新瓶后被记忆模式重新隐藏
+function transferRevealed(fromIdx, toIdx, count, srcLenBefore, tgtLenBefore) {
+    if (!gameState.memoryMode || !gameState.revealed) return;
+    for (let k = 0; k < count; k++) {
+        if (gameState.revealed[fromIdx][srcLenBefore - count + k]) {
+            gameState.revealed[toIdx][tgtLenBefore + k] = true;
+        }
+    }
+}
+
 // ========== 胜负判断 ==========
 
 function checkVictory() {
@@ -324,11 +407,6 @@ function checkVictory() {
 
     const starsEl = document.getElementById('victoryStars');
     if (starsEl) starsEl.textContent = starText;
-
-    const appealBtn = document.getElementById('appealButton');
-    if (appealBtn) {
-        appealBtn.style.display = stars < 3 ? 'inline-block' : 'none';
-    }
 
     const statsLines = [
         `用时: ${formatTime(gameState.timeElapsed)}`,
@@ -378,7 +456,12 @@ async function runAutoPlay(moves) {
         });
         if (gameState.moves.length > 50) gameState.moves.shift();
 
-        pour(fromBottle, toBottle);
+        const srcLenBefore = fromBottle.length;
+        const tgtLenBefore = toBottle.length;
+        const pourResult = pour(fromBottle, toBottle);
+        if (pourResult) {
+            transferRevealed(move.from, move.to, pourResult.count, srcLenBefore, tgtLenBefore);
+        }
         gameState.moveCount++;
         gameState.prevBottles = prevBottles;
         gameState.pourFrom = move.from;
@@ -396,42 +479,6 @@ async function runAutoPlay(moves) {
     }
 
     gameState.autoPlaying = false;
-}
-
-// ========== 申诉 ==========
-
-function appeal() {
-    const textEl = document.getElementById('appealText');
-    if (!textEl) return;
-
-    if (gameState.optimalSteps > 0) {
-        textEl.textContent = `本局最短解需要 ${gameState.optimalSteps} 步，你当前已走 ${gameState.moveCount} 步`;
-        showAppealModal();
-        return;
-    }
-
-    textEl.textContent = '正在计算最短解，请稍候...';
-    showAppealModal();
-
-    setTimeout(() => {
-        const result = solve(gameState.initialBottles, 100000);
-        if (result.solvable) {
-            gameState.optimalSteps = result.depth;
-            textEl.textContent = `本局最短解需要 ${result.depth} 步，你当前已走 ${gameState.moveCount} 步`;
-        } else {
-            textEl.textContent = `本局较为复杂，已探索 ${result.iterations} 个状态仍未确定最短解。请继续尝试！`;
-        }
-    }, 50);
-}
-
-function showAppealModal() {
-    const modal = document.getElementById('appealModal');
-    if (modal) modal.classList.add('active');
-}
-
-function hideAppealModal() {
-    const modal = document.getElementById('appealModal');
-    if (modal) modal.classList.remove('active');
 }
 
 // ========== 自适应难度 ==========
@@ -490,6 +537,61 @@ function adjustDifficulty() {
     }
 }
 
+// ========== 调试面板 ==========
+
+function toggleDebugPanel() {
+    debugMode = !debugMode;
+    const panel = document.getElementById('debugPanel');
+    if (panel) panel.style.display = debugMode ? 'block' : 'none';
+    if (debugMode) updateDebugPanel();
+}
+
+function updateDebugPanel() {
+    if (!debugMode) return;
+    const contentEl = document.getElementById('debugContent');
+    if (!contentEl) return;
+
+    const data = {
+        timestamp: new Date().toISOString(),
+        gameState: {
+            bottles: gameState.bottles,
+            moveCount: gameState.moveCount,
+            optimalSteps: gameState.optimalSteps,
+            difficulty: gameState.difficulty?.label,
+            selectedBottle: gameState.selectedBottle,
+            autoPlaying: gameState.autoPlaying,
+            memoryMode: gameState.memoryMode,
+            revealed: gameState.revealed
+        },
+        player: {
+            currentBracket: player.currentBracket,
+            streak: player.streak,
+            totalGames: player.totalGames,
+            totalWins: player.totalWins
+        },
+        recentMoves: recentMoves.slice(-5)
+    };
+
+    contentEl.textContent = JSON.stringify(data, null, 2);
+}
+
+function copyDebugData() {
+    const contentEl = document.getElementById('debugContent');
+    if (!contentEl) return;
+
+    navigator.clipboard.writeText(contentEl.textContent).then(() => {
+        const btn = document.getElementById('debugCopy');
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = '已复制!';
+            setTimeout(() => btn.textContent = original, 1000);
+        }
+    }).catch(() => {
+        const btn = document.getElementById('debugCopy');
+        if (btn) btn.textContent = '失败';
+    });
+}
+
 // ========== 主题 ==========
 
 function toggleTheme() {
@@ -508,6 +610,6 @@ function loadThemePreference() {
 }
 
 // 导出
-export { gameState, initGame, startGame, checkVictory };
+export { gameState, initGame, startGame, checkVictory, transferRevealed };
 
 document.addEventListener('DOMContentLoaded', initGame);

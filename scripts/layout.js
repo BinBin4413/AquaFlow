@@ -28,8 +28,8 @@ export function initLayout() {
     window.addEventListener('resize', () => updateLayout());
 }
 
-export function updateLayout(numBottles) {
-    const container = document.getElementById('bottleContainer');
+export function updateLayout(numBottles, containerId = 'bottleContainer') {
+    const container = document.getElementById(containerId);
     if (!container) return;
 
     if (typeof numBottles !== 'number') {
