@@ -543,6 +543,82 @@ body {
     80% { transform: translateX(3px) rotate(1deg); }
 }
 
+/* ===== 完成瓶特效（已排序满瓶） ===== */
+
+/* 常驻柔光呼吸 */
+.bottle.completed {
+    animation: monet-complete-glow 2.2s ease-in-out infinite;
+}
+
+/* 描边亮眼：瓶身边框转为淡金色 */
+.bottle.completed .bottle-body {
+    border-color: rgba(230, 200, 130, 0.75);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.5),
+        inset 0 0 18px rgba(255, 220, 150, 0.18),
+        0 0 14px rgba(230, 200, 130, 0.28);
+}
+
+/* 瓶口一圈细金线 */
+.bottle.completed .bottle-neck {
+    border-bottom-color: rgba(230, 200, 130, 0.7);
+}
+
+/* 水面涟漪：从瓶身向外扩散 */
+.bottle.completed::after {
+    content: '';
+    position: absolute;
+    inset: -6px -8px;
+    border-radius: 42%;
+    border: 2px solid rgba(255, 225, 160, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    animation: monet-ripple 2.6s ease-out infinite;
+    z-index: 0;
+}
+
+@keyframes monet-complete-glow {
+    0%, 100% {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.06))
+                drop-shadow(0 0 4px rgba(230, 200, 130, 0.25));
+    }
+    50% {
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08))
+                drop-shadow(0 0 14px rgba(240, 210, 140, 0.55));
+    }
+}
+
+@keyframes monet-ripple {
+    0% {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+    30% {
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+}
+
+/* 首次完成：一次性"开心弹跳"（与常驻光效共存） */
+.bottle.complete-bounce {
+    animation: monet-bounce 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bottle.completed.complete-bounce {
+    animation: monet-bounce 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+               monet-complete-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes monet-bounce {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.15) translateY(-10px); }
+    70% { transform: scale(0.96) translateY(2px); }
+    100% { transform: scale(1); }
+}
+
 /* ===== 页脚 ===== */
 .game-footer {
     text-align: center;

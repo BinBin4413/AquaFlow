@@ -1,9 +1,13 @@
 // UI和动画模块
 
+import { isCompletedBottle } from './solver.js';
+
 let bottleElements = [];
 let confettiActive = false;
 let longPressTimer = null;
 let longPressTriggered = false;
+// 上一帧已完成的瓶子集合（用于检测"首次完成"触发庆祝）
+let prevCompleted = new Set();
 
 export function initUI() {
     const container = document.getElementById('bottleContainer');
@@ -111,7 +115,26 @@ export function updateUI(gameState) {
             if (index === gameState.hintMove.from) el.classList.add('hint-from');
             if (index === gameState.hintMove.to) el.classList.add('hint-to');
         }
+
+        // 完成特效：已排序满瓶 → 常驻光效；首次完成 → 弹跳 + 水花
+        const completed = isCompletedBottle(bottle);
+        const wasCompleted = prevCompleted.has(index);
+        if (completed) {
+            el.classList.add('completed');
+            if (!wasCompleted) {
+                triggerCompleteEffect(el);
+            }
+        } else {
+            el.classList.remove('completed');
+        }
     });
+
+    // 同步"上一帧完成集合"，用于下次检测首次完成
+    prevCompleted = new Set(
+        gameState.bottles
+            .map((b, i) => (isCompletedBottle(b) ? i : -1))
+            .filter(i => i !== -1)
+    );
 
     // 更新统计
     const moveCounter = document.getElementById('moveCounter');
@@ -218,6 +241,54 @@ function triggerShake(element) {
     setTimeout(() => element.classList.remove('shake'), 400);
 }
 
+// ========== 完成瓶子庆祝特效 ==========
+
+function triggerCompleteEffect(element) {
+    // 一次性"开心弹跳"
+    element.classList.remove('complete-bounce');
+    void element.offsetWidth;
+    element.classList.add('complete-bounce');
+    setTimeout(() => element.classList.remove('complete-bounce'), 450);
+
+    // 从瓶口喷出小水花（颜色取自瓶子里的液体，更有质感）
+    createWaterSplash(element);
+}
+
+function createWaterSplash(element) {
+    const rect = element.getBoundingClientRect();
+    const colors = [];
+    element.querySelectorAll('.segment').forEach(seg => {
+        const bg = seg.style.backgroundColor;
+        if (bg && bg !== 'transparent' && bg !== '' && colors.indexOf(bg) === -1) {
+            colors.push(bg);
+        }
+    });
+    if (colors.length === 0) colors.push('#7fd8d8');
+
+    const splashColor = colors[Math.floor(Math.random() * colors.length)];
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height * 0.06;
+    const count = 6;
+
+    for (let i = 0; i < count; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'water-drop';
+        const dx = (Math.random() * 2 - 1) * 36;
+        const dy = -(18 + Math.random() * 36);
+        drop.style.cssText = `
+            left: ${cx}px;
+            top: ${cy}px;
+            width: ${5 + Math.random() * 4}px;
+            height: ${5 + Math.random() * 4}px;
+            background: ${splashColor};
+            --dx: ${dx}px;
+            --dy: ${dy}px;
+        `;
+        document.body.appendChild(drop);
+        setTimeout(() => drop.remove(), 700);
+    }
+}
+
 function handleBottleClick(event) {
     if (longPressTriggered) {
         longPressTriggered = false;
@@ -295,6 +366,34 @@ function createConfetti(container, colors) {
         @keyframes confetti-spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+// 动态注入水花粒子样式
+(function injectSplashStyle() {
+    if (document.getElementById('water-splash-style')) return;
+    const style = document.createElement('style');
+    style.id = 'water-splash-style';
+    style.textContent = `
+        .water-drop {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45);
+            animation: water-drop-fly 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes water-drop-fly {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.95;
+            }
+            100% {
+                transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4);
+                opacity: 0;
+            }
         }
     `;
     document.head.appendChild(style);
